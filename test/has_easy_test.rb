@@ -1,19 +1,52 @@
-require File.dirname(__FILE__) + '/../../../../test/test_helper'
+require 'test/unit'
 
-ActiveRecord::Base.connection.create_table :has_easy_user_tests, :force => true do |t|
-  t.integer :client_id
+require 'rubygems'
+require 'active_record'
+
+$:.unshift File.dirname(__FILE__) + '/../lib'
+require File.dirname(__FILE__) + '/../init'
+
+ActiveRecord::Base.establish_connection(:adapter => "sqlite3", :database => ":memory:")
+
+# AR keeps printing annoying schema statements
+$stdout = StringIO.new
+
+def setup_db
+  ActiveRecord::Base.logger
+  ActiveRecord::Schema.define(:version => 1) do
+    create_table :has_easy_user_tests, :force => true do |t|
+      t.integer :client_id
+    end
+    create_table :has_easy_client_tests, :force => true do
+    end
+    create_table :has_easy_things do |t|
+      t.string  :model_type, :null => false
+      t.integer :model_id, :null => false
+      t.string  :context
+      t.string  :name, :null => false
+      t.string  :value
+      t.timestamps
+    end
+  end
 end
 
-ActiveRecord::Base.connection.create_table :has_easy_client_tests, :force => true do
+def teardown_db
+  ActiveRecord::Base.connection.tables.each do |table|
+    ActiveRecord::Base.connection.drop_table(table)
+  end
 end
-
-HasEasyThing.delete_all
 
 class HasEasyClientTest < ActiveRecord::Base
   has_many :users, :class_name => 'HasEasyUserTest', :foreign_key => 'client_id'
   has_easy :flags do |f|
     f.define :default_through_test_1, :default => 'client default'
   end
+  
+  
+  def self.default_array
+    [1,2,3]
+  end
+  
 end
 
 class HasEasyUserTest < ActiveRecord::Base
@@ -38,13 +71,14 @@ class HasEasyUserTest < ActiveRecord::Base
                                :preprocess => Proc.new{ |value| value == 'true' },
                                :postprocess => Proc.new{ |value| value ? 'true' : 'false' }
   end
+
   has_easy :flags do |f|
     f.define :admin
     f.define :default_test_1, :default => 'funky town'
     f.define :default_through_test_1, :default => 'user default', :default_through => :client
     f.define :default_dynamic_test_1, :default_dynamic => :default_dynamic_test_1
     f.define :default_dynamic_test_2, :default_dynamic => Proc.new{ |user| user.class.count2 += 1 }
-    f.define :default_reference, :default => [1, 2, 3] # demonstrates a bug found by swaltered
+    f.define :default_reference, :default => HasEasyClientTest.default_array # demonstrates a bug found by swaltered
   end
   
   def validate_test_4(value)
@@ -59,8 +93,14 @@ end
 class HasEasyTest < Test::Unit::TestCase
   
   def setup
+    setup_db
+    HasEasyThing.delete_all
     @client = HasEasyClientTest.create
     @user = @client.users.create!
+  end
+
+  def teardown
+    teardown_db
   end
   
   def test_setter_getter
@@ -191,7 +231,7 @@ class HasEasyTest < Test::Unit::TestCase
     assert '1one', @user.errors.on(:preferences)[0]
     assert '2two', @user.errors.on(:preferences)[1]
   end
-  
+
   def test_validate_4_has_easy_errors_added_to_base
     @user.preferences.validate_test_4 = "blah"
     @user.preferences.save

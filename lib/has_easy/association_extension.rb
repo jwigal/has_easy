@@ -35,6 +35,7 @@ module Izzle
       def do_save(with_bang)
         success = true
         proxy_target.each do |thing|
+          next if !thing.changed?
           thing.model_cache = proxy_owner
           if with_bang
             thing.save!
