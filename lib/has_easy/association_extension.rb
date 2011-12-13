@@ -11,19 +11,19 @@ module Izzle
       end
       
       def []=(name, value)
-        proxy_owner.set_has_easy_thing(proxy_reflection.name, name, value)
+        proxy_association.owner.set_has_easy_thing(proxy_association.reflection.name, name, value)
       end
       
       def [](name)
-        proxy_owner.get_has_easy_thing(proxy_reflection.name, name)
+        proxy_association.owner.get_has_easy_thing(proxy_association.reflection.name, name)
       end
       
       def valid?
         valid = true
-        proxy_target.each do |thing|
-          thing.model_cache = proxy_owner
+        proxy_association.target.each do |thing|
+          thing.model_cache = proxy_association.owner
           unless thing.valid?
-            thing.errors.each{ |attr, msg| proxy_owner.errors.add(proxy_reflection.name, msg) }
+            thing.errors.each{ |attr, msg| proxy_association.owner.errors.add(proxy_association.reflection.name, msg) }
             valid = false
           end
         end
@@ -34,14 +34,14 @@ module Izzle
       
       def do_save(with_bang)
         success = true
-        proxy_target.each do |thing|
+        proxy_association.target.each do |thing|
           next if !thing.changed?
-          thing.model_cache = proxy_owner
+          thing.model_cache = proxy_association.owner
           if with_bang
             thing.save!
           elsif thing.save == false
             # delegate the errors to the proxy owner
-            thing.errors.each { |attr,msg| proxy_owner.errors.add(proxy_reflection.name, msg) }
+            thing.errors.each { |attr,msg| proxy_association.owner.errors.add(proxy_association.reflection.name, msg) }
             success = false
           end
         end

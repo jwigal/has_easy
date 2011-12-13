@@ -43,13 +43,13 @@ module Izzle
           
           object_accessors << <<-end_eval
             def #{definition.name}=(value)
-              proxy_owner.set_has_easy_thing('#{@name}', '#{definition.name}', value)
+              proxy_association.owner.set_has_easy_thing('#{@name}', '#{definition.name}', value)
             end
             def #{definition.name}
-              proxy_owner.get_has_easy_thing('#{@name}', '#{definition.name}')
+              proxy_association.owner.get_has_easy_thing('#{@name}', '#{definition.name}')
             end
             def #{definition.name}?
-              !!proxy_owner.get_has_easy_thing('#{@name}', '#{definition.name}')
+              !!proxy_association.owner.get_has_easy_thing('#{@name}', '#{definition.name}')
             end
           end_eval
         end
