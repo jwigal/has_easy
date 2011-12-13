@@ -31,9 +31,9 @@ class HasEasyThing < ActiveRecord::Base
     end
     
     if success == false
-      self.errors.add_to_base("has_easy validation failed for '#{self.name}'")
+      self.errors[:base] << "has_easy validation failed for '#{self.name}'"
     elsif success.instance_of?(Array)
-      success.each{ |message| self.errors.add_to_base(message) }
+      success.each{ |message| self.errors[:base] << message }
     end
   end
   
