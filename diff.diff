@@ -1,0 +1,1086 @@
+diff --git a/CHANGELOG b/CHANGELOG
+index f9dd00c..3d34837 100644
+--- a/CHANGELOG
++++ b/CHANGELOG
+@@ -11,3 +11,6 @@
+ 
+ 06/18/2008
+ * added :alias and :aliases options to has_easy
++
++03/28/2012
++* converted to a gem, version 0.9.0 (Jeff Wigal)
+\ No newline at end of file
+diff --git a/Gemfile b/Gemfile
+new file mode 100644
+index 0000000..3f9ca5d
+--- /dev/null
++++ b/Gemfile
+@@ -0,0 +1,16 @@
++source "http://rubygems.org"
++# Add dependencies required to use your gem here.
++# Example:
++#   gem "activesupport", ">= 2.3.5"
++
++# Add dependencies to develop your gem here.
++# Include everything needed to run rake, tests, features, etc.
++group :development do
++  gem "shoulda", ">= 0"
++  gem "bundler", "~> 1.0.0"
++  gem "jeweler", "~> 1.6.4"
++  gem "rcov", ">= 0"
++  gem "sqlite3"
++end
++
++gem "rails", ">= 3.0"
+diff --git a/Gemfile.lock b/Gemfile.lock
+new file mode 100644
+index 0000000..ba74c69
+--- /dev/null
++++ b/Gemfile.lock
+@@ -0,0 +1,100 @@
++GEM
++  remote: http://rubygems.org/
++  specs:
++    actionmailer (3.1.3)
++      actionpack (= 3.1.3)
++      mail (~> 2.3.0)
++    actionpack (3.1.3)
++      activemodel (= 3.1.3)
++      activesupport (= 3.1.3)
++      builder (~> 3.0.0)
++      erubis (~> 2.7.0)
++      i18n (~> 0.6)
++      rack (~> 1.3.5)
++      rack-cache (~> 1.1)
++      rack-mount (~> 0.8.2)
++      rack-test (~> 0.6.1)
++      sprockets (~> 2.0.3)
++    activemodel (3.1.3)
++      activesupport (= 3.1.3)
++      builder (~> 3.0.0)
++      i18n (~> 0.6)
++    activerecord (3.1.3)
++      activemodel (= 3.1.3)
++      activesupport (= 3.1.3)
++      arel (~> 2.2.1)
++      tzinfo (~> 0.3.29)
++    activeresource (3.1.3)
++      activemodel (= 3.1.3)
++      activesupport (= 3.1.3)
++    activesupport (3.1.3)
++      multi_json (~> 1.0)
++    arel (2.2.3)
++    builder (3.0.0)
++    erubis (2.7.0)
++    git (1.2.5)
++    hike (1.2.1)
++    i18n (0.6.0)
++    jeweler (1.6.4)
++      bundler (~> 1.0)
++      git (>= 1.2.5)
++      rake
++    json (1.6.5)
++    mail (2.3.2)
++      i18n (>= 0.4.0)
++      mime-types (~> 1.16)
++      treetop (~> 1.4.8)
++    mime-types (1.17.2)
++    multi_json (1.1.0)
++    polyglot (0.3.3)
++    rack (1.3.6)
++    rack-cache (1.2)
++      rack (>= 0.4)
++    rack-mount (0.8.3)
++      rack (>= 1.0.0)
++    rack-ssl (1.3.2)
++      rack
++    rack-test (0.6.1)
++      rack (>= 1.0)
++    rails (3.1.3)
++      actionmailer (= 3.1.3)
++      actionpack (= 3.1.3)
++      activerecord (= 3.1.3)
++      activeresource (= 3.1.3)
++      activesupport (= 3.1.3)
++      bundler (~> 1.0)
++      railties (= 3.1.3)
++    railties (3.1.3)
++      actionpack (= 3.1.3)
++      activesupport (= 3.1.3)
++      rack-ssl (~> 1.3.2)
++      rake (>= 0.8.7)
++      rdoc (~> 3.4)
++      thor (~> 0.14.6)
++    rake (0.9.2.2)
++    rcov (1.0.0)
++    rdoc (3.12)
++      json (~> 1.4)
++    shoulda (2.11.3)
++    sprockets (2.0.3)
++      hike (~> 1.2)
++      rack (~> 1.0)
++      tilt (~> 1.1, != 1.3.0)
++    sqlite3 (1.3.5)
++    thor (0.14.6)
++    tilt (1.3.3)
++    treetop (1.4.10)
++      polyglot
++      polyglot (>= 0.3.1)
++    tzinfo (0.3.32)
++
++PLATFORMS
++  ruby
++
++DEPENDENCIES
++  bundler (~> 1.0.0)
++  jeweler (~> 1.6.4)
++  rails (>= 3.0)
++  rcov
++  shoulda
++  sqlite3
+diff --git a/README.rdoc b/README.rdoc
+old mode 100644
+new mode 100755
+index 34e0f7c..6da6ae0
+--- a/README.rdoc
++++ b/README.rdoc
+@@ -3,13 +3,14 @@ Easy access and creation of "has many" relationships.
+ What's the difference between flags, preferences and options?  Nothing really, they are just "has many" relationships.  So why should I install a separate plugin for each one?  This plugin can be used to add preferences, flags, options, etc to any model.
+ 
+ ==Installation
+- git clone git://github.com/cjbottaro/has_easy.git vendor/plugins/has_easy
+- script/generate has_easy_migration create_has_easy_things
+- rake db:migrate
+- rake db:test:prepare
+- cd vendor/plugins/has_easy
+- rake test
++In your Gemfile:
++
++ gem "has_easy"
+ 
++At the command prompt:
++ rails g has_easy_migration
++ rake db:migrate
++ 
+ ==Example
+ 
+  class User < ActiveRecord::Base
+diff --git a/Rakefile b/Rakefile
+index d7d58a0..bb8981a 100644
+--- a/Rakefile
++++ b/Rakefile
+@@ -1,22 +1,53 @@
++# encoding: utf-8
++
++require 'rubygems'
++require 'bundler'
++begin
++  Bundler.setup(:default, :development)
++rescue Bundler::BundlerError => e
++  $stderr.puts e.message
++  $stderr.puts "Run `bundle install` to install missing gems"
++  exit e.status_code
++end
+ require 'rake'
++
++require 'jeweler'
++Jeweler::Tasks.new do |gem|
++  # gem is a Gem::Specification... see http://docs.rubygems.org/read/chapter/20 for more options
++  gem.name = "has_easy"
++  gem.homepage = "http://github.com/jwigal/has_easy"
++  gem.license = "MIT"
++  gem.summary = %Q{TODO: one-line summary of your gem}
++  gem.description = %Q{TODO: longer description of your gem}
++  gem.email = "jeff@assignr.com"
++  gem.authors = ["Jeff Wigal"]
++  # dependencies defined in Gemfile
++end
++Jeweler::RubygemsDotOrgTasks.new
++
+ require 'rake/testtask'
+-require 'rake/rdoctask'
++Rake::TestTask.new(:test) do |test|
++  test.libs << 'lib' << 'test'
++  test.pattern = 'test/**/test_*.rb'
++  test.verbose = true
++end
++
++require 'rcov/rcovtask'
++Rcov::RcovTask.new do |test|
++  test.libs << 'test'
++  test.pattern = 'test/**/test_*.rb'
++  test.verbose = true
++  test.rcov_opts << '--exclude "gems/*"'
++end
+ 
+-desc 'Default: run unit tests.'
+ task :default => :test
+ 
+-desc 'Test the has_easy plugin.'
+-Rake::TestTask.new(:test) do |t|
+-  t.libs << 'lib'
+-  t.pattern = 'test/**/*_test.rb'
+-  t.verbose = true
+-end
++require 'rdoc/task'
++Rake::RDocTask.new do |rdoc|
++  version = File.exist?('VERSION') ? File.read('VERSION') : ""
+ 
+-desc 'Generate documentation for the has_easy plugin.'
+-Rake::RDocTask.new(:rdoc) do |rdoc|
+   rdoc.rdoc_dir = 'rdoc'
+-  rdoc.title    = 'HasEasy'
+-  rdoc.options << '--line-numbers' << '--inline-source'
+-  rdoc.rdoc_files.include('README')
++  rdoc.title = "has_easy #{version}"
++  rdoc.rdoc_files.include('README*')
+   rdoc.rdoc_files.include('lib/**/*.rb')
+ end
+diff --git a/VERSION b/VERSION
+new file mode 100644
+index 0000000..899f24f
+--- /dev/null
++++ b/VERSION
+@@ -0,0 +1 @@
++0.9.0
+\ No newline at end of file
+diff --git a/has_easy.gemspec b/has_easy.gemspec
+new file mode 100644
+index 0000000..1beef76
+--- /dev/null
++++ b/has_easy.gemspec
+@@ -0,0 +1,74 @@
++# Generated by jeweler
++# DO NOT EDIT THIS FILE DIRECTLY
++# Instead, edit Jeweler::Tasks in Rakefile, and run 'rake gemspec'
++# -*- encoding: utf-8 -*-
++
++Gem::Specification.new do |s|
++  s.name = %q{has_easy}
++  s.version = "0.9.0"
++
++  s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
++  s.authors = ["Jeff Wigal"]
++  s.date = %q{2012-03-28}
++  s.description = %q{TODO: longer description of your gem}
++  s.email = %q{jeff@assignr.com}
++  s.extra_rdoc_files = [
++    "README",
++    "README.rdoc"
++  ]
++  s.files = [
++    "CHANGELOG",
++    "Gemfile",
++    "Gemfile.lock",
++    "MIT-LICENSE",
++    "README",
++    "README.rdoc",
++    "Rakefile",
++    "VERSION",
++    "lib/generators/has_easy_migration/USAGE",
++    "lib/generators/has_easy_migration/has_easy_migration_generator.rb",
++    "lib/generators/has_easy_migration/templates/has_easy_migration.rb",
++    "lib/has_easy.rb",
++    "lib/has_easy/association_extension.rb",
++    "lib/has_easy/configurator.rb",
++    "lib/has_easy/definition.rb",
++    "lib/has_easy/errors.rb",
++    "lib/has_easy/helpers.rb",
++    "lib/has_easy_thing.rb",
++    "lib/tasks/has_easy_tasks.rake",
++    "test/test_has_easy.rb"
++  ]
++  s.homepage = %q{http://github.com/jwigal/has_easy}
++  s.licenses = ["MIT"]
++  s.require_paths = ["lib"]
++  s.rubygems_version = %q{1.5.2}
++  s.summary = %q{TODO: one-line summary of your gem}
++
++  if s.respond_to? :specification_version then
++    s.specification_version = 3
++
++    if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
++      s.add_runtime_dependency(%q<rails>, [">= 3.0"])
++      s.add_development_dependency(%q<shoulda>, [">= 0"])
++      s.add_development_dependency(%q<bundler>, ["~> 1.0.0"])
++      s.add_development_dependency(%q<jeweler>, ["~> 1.6.4"])
++      s.add_development_dependency(%q<rcov>, [">= 0"])
++      s.add_development_dependency(%q<sqlite3>, [">= 0"])
++    else
++      s.add_dependency(%q<rails>, [">= 3.0"])
++      s.add_dependency(%q<shoulda>, [">= 0"])
++      s.add_dependency(%q<bundler>, ["~> 1.0.0"])
++      s.add_dependency(%q<jeweler>, ["~> 1.6.4"])
++      s.add_dependency(%q<rcov>, [">= 0"])
++      s.add_dependency(%q<sqlite3>, [">= 0"])
++    end
++  else
++    s.add_dependency(%q<rails>, [">= 3.0"])
++    s.add_dependency(%q<shoulda>, [">= 0"])
++    s.add_dependency(%q<bundler>, ["~> 1.0.0"])
++    s.add_dependency(%q<jeweler>, ["~> 1.6.4"])
++    s.add_dependency(%q<rcov>, [">= 0"])
++    s.add_dependency(%q<sqlite3>, [">= 0"])
++  end
++end
++
+diff --git a/init.rb b/init.rb
+deleted file mode 100644
+index 30641ee..0000000
+--- a/init.rb
++++ /dev/null
+@@ -1,2 +0,0 @@
+-require 'has_easy'
+-ActiveRecord::Base.send(:include, Izzle::HasEasy)
+\ No newline at end of file
+diff --git a/install.rb b/install.rb
+deleted file mode 100644
+index f7732d3..0000000
+--- a/install.rb
++++ /dev/null
+@@ -1 +0,0 @@
+-# Install hook code here
+diff --git a/lib/generators/has_easy_migration/has_easy_migration_generator.rb b/lib/generators/has_easy_migration/has_easy_migration_generator.rb
+index 2ca3343..ad3b7fb 100644
+--- a/lib/generators/has_easy_migration/has_easy_migration_generator.rb
++++ b/lib/generators/has_easy_migration/has_easy_migration_generator.rb
+@@ -1,8 +1,19 @@
+-require 'rails/generators/active_record'
++require 'rails/generators'
++require 'rails/generators/migration'
+ 
+-class HasEasyMigrationGenerator < ActiveRecord::Generators::Base
+-  source_root File.expand_path('../templates', __FILE__)
+-  def create_migration_file
+-    migration_template "has_easy_migration.rb", "db/migrate/#{file_name}.rb"
++class HasEasyMigrationGenerator < Rails::Generators::Base
++  include Rails::Generators::Migration
++  def self.source_root
++    @source_root ||= File.join(File.dirname(__FILE__), 'templates')
+   end
+-end
++
++  # migration_template 'has_easy_migration.rb'
++  def self.next_migration_number(path)
++    Time.now.utc.strftime("%Y%m%d%H%M%S")
++  end
++
++  def create_model_file
++    migration_template "has_easy_migration.rb", "db/migrate/#{migration_number}create_has_easy_migration.rb"
++  end
++
++end
+\ No newline at end of file
+diff --git a/lib/generators/has_easy_migration/templates/has_easy_migration.rb b/lib/generators/has_easy_migration/templates/has_easy_migration.rb
+index 6e07d7f..11e3db4 100644
+--- a/lib/generators/has_easy_migration/templates/has_easy_migration.rb
++++ b/lib/generators/has_easy_migration/templates/has_easy_migration.rb
+@@ -1,4 +1,4 @@
+-class <%= class_name.underscore.camelize %> < ActiveRecord::Migration
++class CreateHasEasyMigration < ActiveRecord::Migration
+   def self.up
+     create_table :has_easy_things do |t|
+       t.string  :model_type, :null => false
+diff --git a/lib/has_easy.rb b/lib/has_easy.rb
+index e1a6227..cc6e3a2 100644
+--- a/lib/has_easy.rb
++++ b/lib/has_easy.rb
+@@ -130,3 +130,4 @@ module Izzle
+   end
+   
+ end
++ActiveRecord::Base.send(:include, Izzle::HasEasy)
+\ No newline at end of file
+diff --git a/test/has_easy_test.rb b/test/has_easy_test.rb
+deleted file mode 100644
+index 5383a09..0000000
+--- a/test/has_easy_test.rb
++++ /dev/null
+@@ -1,337 +0,0 @@
+-require 'test/unit'
+-
+-require 'rubygems'
+-require 'active_record'
+-
+-$:.unshift File.dirname(__FILE__) + '/../lib'
+-require File.dirname(__FILE__) + '/../init'
+-
+-ActiveRecord::Base.establish_connection(:adapter => "sqlite3", :database => ":memory:")
+-
+-# AR keeps printing annoying schema statements
+-$stdout = StringIO.new
+-
+-def setup_db
+-  ActiveRecord::Base.logger
+-  ActiveRecord::Schema.define(:version => 1) do
+-    create_table :has_easy_user_tests, :force => true do |t|
+-      t.integer :client_id
+-    end
+-    create_table :has_easy_client_tests, :force => true do
+-    end
+-    create_table :has_easy_things do |t|
+-      t.string  :model_type, :null => false
+-      t.integer :model_id, :null => false
+-      t.string  :context
+-      t.string  :name, :null => false
+-      t.string  :value
+-      t.timestamps
+-    end
+-  end
+-end
+-
+-def teardown_db
+-  ActiveRecord::Base.connection.tables.each do |table|
+-    ActiveRecord::Base.connection.drop_table(table)
+-  end
+-end
+-
+-class HasEasyClientTest < ActiveRecord::Base
+-  has_many :users, :class_name => 'HasEasyUserTest', :foreign_key => 'client_id'
+-  has_easy :flags do |f|
+-    f.define :default_through_test_1, :default => 'client default'
+-  end
+-  
+-  
+-  def self.default_array
+-    [1,2,3]
+-  end
+-  
+-end
+-
+-class HasEasyUserTest < ActiveRecord::Base
+-  belongs_to :client, :class_name => 'HasEasyClientTest', :foreign_key => 'client_id'
+-  cattr_accessor :count1, :count2
+-  @@count1, @@count2 = 0, 0
+-  has_easy :preferences, :alias => :prefs do |p|
+-    p.define :color
+-    p.define :theme, :type_check => String
+-    p.define :validate_test_1, :validate => [true, 'true', 1, 't']
+-    p.define :validate_test_2, :validate => Proc.new { |value|
+-      [true, 'true', 1, 't'].include?(value)
+-    }
+-    p.define :validate_test_3, :validate => Proc.new { |value|
+-      raise HasEasy::ValidationError unless [true, 'true', 1, 't'].include?(value)
+-    }
+-    p.define :validate_test_4, :validate => :validate_test_4
+-    p.define :preprocess_test_1, :preprocess => Proc.new { |value| [true, 'true', 1, 't'].include?(value) ? true : false }
+-    p.define :postprocess_test_1, :postprocess => Proc.new { |value| [true, 'true', 1, 't'].include?(value) ? true : false }
+-    p.define :form_usage_test, :default => false,
+-                               :type_check => [TrueClass, FalseClass],
+-                               :preprocess => Proc.new{ |value| value == 'true' },
+-                               :postprocess => Proc.new{ |value| value ? 'true' : 'false' }
+-  end
+-
+-  has_easy :flags do |f|
+-    f.define :admin
+-    f.define :default_test_1, :default => 'funky town'
+-    f.define :default_through_test_1, :default => 'user default', :default_through => :client
+-    f.define :default_dynamic_test_1, :default_dynamic => :default_dynamic_test_1
+-    f.define :default_dynamic_test_2, :default_dynamic => Proc.new{ |user| user.class.count2 += 1 }
+-    f.define :default_reference, :default => HasEasyClientTest.default_array # demonstrates a bug found by swaltered
+-  end
+-  
+-  def validate_test_4(value)
+-    ["1one", "2two"]
+-  end
+-  
+-  def default_dynamic_test_1
+-    self.class.count1 += 1
+-  end
+-end
+-
+-class HasEasyTest < Test::Unit::TestCase
+-  
+-  def setup
+-    setup_db
+-    HasEasyThing.delete_all
+-    @client = HasEasyClientTest.create
+-    @user = @client.users.create!
+-  end
+-
+-  def teardown
+-    teardown_db
+-  end
+-  
+-  def test_setter_getter
+-    @user.set_has_easy_thing(:preferences, :color, 'red')
+-    assert_equal 'red', @user.get_has_easy_thing(:preferences, :color)
+-    assert_equal 1, HasEasyThing.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
+-    
+-    @user.set_has_easy_thing(:flags, :admin, true)
+-    assert_equal true, @user.get_has_easy_thing(:flags, :admin)
+-    assert_equal 2, HasEasyThing.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
+-  end
+-  
+-  def test_array_access
+-    @user.preferences[:color] = 'red'
+-    assert_equal 'red', @user.preferences[:color]
+-    assert_equal 1, HasEasyThing.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
+-    
+-    @user.flags[:admin] = true
+-    assert_equal true, @user.flags[:admin]
+-    assert_equal 2, HasEasyThing.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
+-  end
+-  
+-  def test_object_access
+-    @user.preferences.color = 'red'
+-    assert_equal 'red', @user.preferences.color
+-    assert_equal 1, HasEasyThing.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
+-    
+-    @user.flags.admin = true
+-    assert_equal true, @user.flags.admin
+-    assert_equal 2, HasEasyThing.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
+-  end
+-  
+-  def test_easy_access
+-    @user.preferences_color = 'red'
+-    assert_equal 'red', @user.preferences_color
+-    assert_equal true, @user.preferences_color?
+-    assert_equal 1, HasEasyThing.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
+-    
+-    @user.flags_admin = true
+-    assert_equal true, @user.flags_admin
+-    assert_equal true, @user.flags_admin?
+-    assert_equal 2, HasEasyThing.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
+-  end
+-  
+-  def test_overwrite
+-    @user.preferences[:color] = 'red'
+-    assert_equal 'red', @user.preferences[:color]
+-    assert_equal 1, HasEasyThing.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
+-    
+-    @user.preferences[:color] = 'blue'
+-    assert_equal 'blue', @user.preferences[:color]
+-    assert_equal 1, HasEasyThing.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
+-  end
+-  
+-  def test_alias
+-    @user.preferences.theme = "savage thunder"
+-    assert_equal @user.preferences[:theme], @user.prefs[:theme]
+-    assert_equal @user.preferences.theme, @user.prefs.theme
+-    assert_equal @user.preferences_theme, @user.prefs_theme
+-    assert_equal @user.preferences_theme?, @user.prefs_theme?
+-  end
+-  
+-  def test_type_check
+-    @user.preferences.theme = "savage thunder"
+-    assert @user.preferences.save
+-    
+-    @user.preferences.theme = 1
+-    assert_raise(ActiveRecord::RecordInvalid){ @user.preferences.save! }
+-    
+-    assert !@user.preferences.save
+-    assert !@user.errors.empty?
+-  end
+-  
+-  def test_validate_1
+-    @user.preferences.validate_test_1 = 1
+-    assert @user.preferences.save
+-    @user.preferences.validate_test_1 = true
+-    assert @user.preferences.save
+-    @user.preferences.validate_test_1 = 'true'
+-    assert @user.preferences.save
+-    
+-    @user.preferences.validate_test_1 = false
+-    assert_raise(ActiveRecord::RecordInvalid){ @user.preferences.save! }
+-    assert !@user.preferences.save
+-    assert !@user.errors.empty?
+-  end
+-  
+-  def test_validate_2
+-    @user.preferences.validate_test_2 = 1
+-    assert @user.preferences.save
+-    @user.preferences.validate_test_2 = true
+-    assert @user.preferences.save
+-    @user.preferences.validate_test_2 = 'true'
+-    assert @user.preferences.save
+-    
+-    @user.preferences.validate_test_2 = false
+-    assert_raise(ActiveRecord::RecordInvalid){ @user.preferences.save! }
+-    assert !@user.preferences.save
+-    assert !@user.errors.empty?
+-  end
+-  
+-  def test_validate_3
+-    @user.preferences.validate_test_3 = 1
+-    assert @user.preferences.save
+-    @user.preferences.validate_test_3 = true
+-    assert @user.preferences.save
+-    @user.preferences.validate_test_3 = 'true'
+-    assert @user.preferences.save
+-    
+-    @user.preferences.validate_test_3 = false
+-    assert_raise(ActiveRecord::RecordInvalid){ @user.preferences.save! }
+-    assert !@user.preferences.save
+-    assert !@user.errors.empty?
+-  end
+-  
+-  def test_validate_4
+-    @user.preferences.validate_test_4 = "blah"
+-    assert_raise(ActiveRecord::RecordInvalid){ @user.preferences.save! }
+-    assert !@user.preferences.save
+-    assert 2, @user.errors.on(:preferences).length
+-    assert '1one', @user.errors.on(:preferences)[0]
+-    assert '2two', @user.errors.on(:preferences)[1]
+-    
+-    # nasty bug when the parent is a new record
+-    user = @user.class.new :preferences_validate_test_4 => "blah"
+-    assert !user.save
+-    assert 2, @user.errors.on(:preferences).length
+-    assert '1one', @user.errors.on(:preferences)[0]
+-    assert '2two', @user.errors.on(:preferences)[1]
+-  end
+-
+-  def test_validate_4_has_easy_errors_added_to_base
+-    @user.preferences.validate_test_4 = "blah"
+-    @user.preferences.save
+-    @preference = @user.preferences.detect { |pref|  !pref.errors.empty? }
+-    assert_equal ['1one','2two'], @preference.errors.full_messages 
+-  end
+-  
+-  def test_preprocess_1
+-    @user.preferences.preprocess_test_1 = "blah"
+-    assert_equal "blah", @user.preferences.preprocess_test_1
+-    assert_equal "blah", @user.preferences_preprocess_test_1
+-    @user.preferences_preprocess_test_1 = "blah"
+-    assert_equal false, @user.preferences.preprocess_test_1
+-    assert_equal false, @user.preferences_preprocess_test_1
+-    
+-    @user.preferences.preprocess_test_1 = "true"
+-    assert_equal "true", @user.preferences.preprocess_test_1
+-    assert_equal "true", @user.preferences_preprocess_test_1
+-    @user.preferences_preprocess_test_1 = "true"
+-    assert_equal true, @user.preferences.preprocess_test_1
+-    assert_equal true, @user.preferences_preprocess_test_1
+-  end
+-  
+-  def test_postprocess_1
+-    @user.preferences.postprocess_test_1 = "blah"
+-    assert_equal "blah", @user.preferences.postprocess_test_1
+-    assert_equal false, @user.preferences_postprocess_test_1
+-    
+-    @user.preferences.postprocess_test_1 = "true"
+-    assert_equal "true", @user.preferences.postprocess_test_1
+-    assert_equal true, @user.preferences_postprocess_test_1
+-  end
+-  
+-  def test_default_1
+-    assert_equal 'funky town', HasEasyUserTest.new.flags.default_test_1
+-    assert_equal 'funky town', @user.flags.default_test_1
+-    @user.flags.default_test_1 = "stupid town"
+-    assert_equal "stupid town", @user.flags.default_test_1
+-    @user.flags.save
+-    @user = HasEasyUserTest.find(@user.id)
+-    assert_equal "stupid town", @user.flags.default_test_1
+-  end
+-  
+-  def test_default_though_1
+-    client = HasEasyClientTest.create
+-    user = client.users.create
+-    assert_equal 'client default', user.flags.default_through_test_1
+-    
+-    client.flags.default_through_test_1 = 'not client default'
+-    client.flags.save
+-    user.client(true)
+-    assert_equal 'not client default', user.flags.default_through_test_1
+-    
+-    user.flags.default_through_test_1 = 'not user default'
+-    assert_equal 'not user default', user.flags.default_through_test_1
+-    
+-    assert_equal 'user default', HasEasyUserTest.new.flags.default_through_test_1
+-  end
+-  
+-  def test_default_dynamic_1
+-    assert_equal 1, @user.flags.default_dynamic_test_1
+-    assert_equal 2, @user.flags.default_dynamic_test_1
+-  end
+-  
+-  def test_default_dynamic_2
+-    assert_equal 1, @user.flags.default_dynamic_test_2
+-    assert_equal 2, @user.flags.default_dynamic_test_2
+-  end
+-  
+-  # This is from a bug that swalterd found that has to do with how has_easy assigns default values.
+-  # Each thing shares the same default value, so changing it for one will change it for everyone.
+-  # The fix is to clone (if possible) the default value when a new HasEasyThing is created.
+-  def test_default_reference
+-    v = @user.flags.default_reference[0]
+-    @user.flags.default_reference[0] = rand(10) + 10
+-    new_user = HasEasyUserTest.new
+-    assert_equal v, new_user.flags_default_reference[0]
+-  end
+-  
+-  def test_form_usage
+-    assert_equal false, @user.prefs.form_usage_test
+-    assert_equal 'false', @user.prefs_form_usage_test
+-    
+-    params = { :person => {:prefs_form_usage_test => 'true'} }
+-    assert @user.update_attributes(params[:person])
+-    assert_equal true, @user.prefs.form_usage_test
+-    assert_equal 'true', @user.prefs_form_usage_test
+-    @user.preferences.save!
+-    @user = @user.class.find(@user.id)
+-    assert_equal true, @user.prefs.form_usage_test
+-    assert_equal 'true', @user.prefs_form_usage_test
+-    
+-    params = { :person => {:prefs_form_usage_test => 'false'} }
+-    assert @user.update_attributes(params[:person])
+-    assert_equal false, @user.prefs.form_usage_test
+-    assert_equal 'false', @user.prefs_form_usage_test
+-    @user.preferences.save!
+-    @user = @user.class.find(@user.id)
+-    assert_equal false, @user.prefs.form_usage_test
+-    assert_equal 'false', @user.prefs_form_usage_test
+-  end
+-  
+-end
+diff --git a/test/test_has_easy.rb b/test/test_has_easy.rb
+new file mode 100644
+index 0000000..3cc97b8
+--- /dev/null
++++ b/test/test_has_easy.rb
+@@ -0,0 +1,337 @@
++require 'test/unit'
++
++require 'rubygems'
++require 'active_record'
++
++$:.unshift File.dirname(__FILE__) + '/../lib'
++require File.dirname(__FILE__) + '/../init'
++
++ActiveRecord::Base.establish_connection(:adapter => "sqlite3", :database => ":memory:")
++
++# AR keeps printing annoying schema statements
++$stdout = StringIO.new
++
++def setup_db
++  ActiveRecord::Base.logger
++  ActiveRecord::Schema.define(:version => 1) do
++    create_table :has_easy_user_tests, :force => true do |t|
++      t.integer :client_id
++    end
++    create_table :has_easy_client_tests, :force => true do
++    end
++    create_table :has_easy_things do |t|
++      t.string  :model_type, :null => false
++      t.integer :model_id, :null => false
++      t.string  :context
++      t.string  :name, :null => false
++      t.string  :value
++      t.timestamps
++    end
++  end
++end
++
++def teardown_db
++  ActiveRecord::Base.connection.tables.each do |table|
++    ActiveRecord::Base.connection.drop_table(table)
++  end
++end
++
++class HasEasyClientTest < ActiveRecord::Base
++  has_many :users, :class_name => 'HasEasyUserTest', :foreign_key => 'client_id'
++  has_easy :flags do |f|
++    f.define :default_through_test_1, :default => 'client default'
++  end
++  
++  
++  def self.default_array
++    [1,2,3]
++  end
++  
++end
++
++class HasEasyUserTest < ActiveRecord::Base
++  belongs_to :client, :class_name => 'HasEasyClientTest', :foreign_key => 'client_id'
++  cattr_accessor :count1, :count2
++  @@count1, @@count2 = 0, 0
++  has_easy :preferences, :alias => :prefs do |p|
++    p.define :color
++    p.define :theme, :type_check => String
++    p.define :validate_test_1, :validate => [true, 'true', 1, 't']
++    p.define :validate_test_2, :validate => Proc.new { |value|
++      [true, 'true', 1, 't'].include?(value)
++    }
++    p.define :validate_test_3, :validate => Proc.new { |value|
++      raise HasEasy::ValidationError unless [true, 'true', 1, 't'].include?(value)
++    }
++    p.define :validate_test_4, :validate => :validate_test_4
++    p.define :preprocess_test_1, :preprocess => Proc.new { |value| [true, 'true', 1, 't'].include?(value) ? true : false }
++    p.define :postprocess_test_1, :postprocess => Proc.new { |value| [true, 'true', 1, 't'].include?(value) ? true : false }
++    p.define :form_usage_test, :default => false,
++                               :type_check => [TrueClass, FalseClass],
++                               :preprocess => Proc.new{ |value| value == 'true' },
++                               :postprocess => Proc.new{ |value| value ? 'true' : 'false' }
++  end
++
++  has_easy :flags do |f|
++    f.define :admin
++    f.define :default_test_1, :default => 'funky town'
++    f.define :default_through_test_1, :default => 'user default', :default_through => :client
++    f.define :default_dynamic_test_1, :default_dynamic => :default_dynamic_test_1
++    f.define :default_dynamic_test_2, :default_dynamic => Proc.new{ |user| user.class.count2 += 1 }
++    f.define :default_reference, :default => HasEasyClientTest.default_array # demonstrates a bug found by swaltered
++  end
++  
++  def validate_test_4(value)
++    ["1one", "2two"]
++  end
++  
++  def default_dynamic_test_1
++    self.class.count1 += 1
++  end
++end
++
++class HasEasyTest < Test::Unit::TestCase
++  
++  def setup
++    setup_db
++    HasEasyThing.delete_all
++    @client = HasEasyClientTest.create
++    @user = @client.users.create!
++  end
++
++  def teardown
++    teardown_db
++  end
++  
++  def test_setter_getter
++    @user.set_has_easy_thing(:preferences, :color, 'red')
++    assert_equal 'red', @user.get_has_easy_thing(:preferences, :color)
++    assert_equal 1, HasEasyThing.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
++    
++    @user.set_has_easy_thing(:flags, :admin, true)
++    assert_equal true, @user.get_has_easy_thing(:flags, :admin)
++    assert_equal 2, HasEasyThing.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
++  end
++  
++  def test_array_access
++    @user.preferences[:color] = 'red'
++    assert_equal 'red', @user.preferences[:color]
++    assert_equal 1, HasEasyThing.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
++    
++    @user.flags[:admin] = true
++    assert_equal true, @user.flags[:admin]
++    assert_equal 2, HasEasyThing.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
++  end
++  
++  def test_object_access
++    @user.preferences.color = 'red'
++    assert_equal 'red', @user.preferences.color
++    assert_equal 1, HasEasyThing.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
++    
++    @user.flags.admin = true
++    assert_equal true, @user.flags.admin
++    assert_equal 2, HasEasyThing.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
++  end
++  
++  def test_easy_access
++    @user.preferences_color = 'red'
++    assert_equal 'red', @user.preferences_color
++    assert_equal true, @user.preferences_color?
++    assert_equal 1, HasEasyThing.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
++    
++    @user.flags_admin = true
++    assert_equal true, @user.flags_admin
++    assert_equal true, @user.flags_admin?
++    assert_equal 2, HasEasyThing.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
++  end
++  
++  def test_overwrite
++    @user.preferences[:color] = 'red'
++    assert_equal 'red', @user.preferences[:color]
++    assert_equal 1, HasEasyThing.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
++    
++    @user.preferences[:color] = 'blue'
++    assert_equal 'blue', @user.preferences[:color]
++    assert_equal 1, HasEasyThing.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
++  end
++  
++  def test_alias
++    @user.preferences.theme = "savage thunder"
++    assert_equal @user.preferences[:theme], @user.prefs[:theme]
++    assert_equal @user.preferences.theme, @user.prefs.theme
++    assert_equal @user.preferences_theme, @user.prefs_theme
++    assert_equal @user.preferences_theme?, @user.prefs_theme?
++  end
++  
++  def test_type_check
++    @user.preferences.theme = "savage thunder"
++    assert @user.preferences.save
++    
++    @user.preferences.theme = 1
++    assert_raise(ActiveRecord::RecordInvalid){ @user.preferences.save! }
++    
++    assert !@user.preferences.save
++    assert !@user.errors.empty?
++  end
++  
++  def test_validate_1
++    @user.preferences.validate_test_1 = 1
++    assert @user.preferences.save
++    @user.preferences.validate_test_1 = true
++    assert @user.preferences.save
++    @user.preferences.validate_test_1 = 'true'
++    assert @user.preferences.save
++    
++    @user.preferences.validate_test_1 = false
++    assert_raise(ActiveRecord::RecordInvalid){ @user.preferences.save! }
++    assert !@user.preferences.save
++    assert !@user.errors.empty?
++  end
++  
++  def test_validate_2
++    @user.preferences.validate_test_2 = 1
++    assert @user.preferences.save
++    @user.preferences.validate_test_2 = true
++    assert @user.preferences.save
++    @user.preferences.validate_test_2 = 'true'
++    assert @user.preferences.save
++    
++    @user.preferences.validate_test_2 = false
++    assert_raise(ActiveRecord::RecordInvalid){ @user.preferences.save! }
++    assert !@user.preferences.save
++    assert !@user.errors.empty?
++  end
++  
++  def test_validate_3
++    @user.preferences.validate_test_3 = 1
++    assert @user.preferences.save
++    @user.preferences.validate_test_3 = true
++    assert @user.preferences.save
++    @user.preferences.validate_test_3 = 'true'
++    assert @user.preferences.save
++    
++    @user.preferences.validate_test_3 = false
++    assert_raise(ActiveRecord::RecordInvalid){ @user.preferences.save! }
++    assert !@user.preferences.save
++    assert !@user.errors.empty?
++  end
++  
++  def test_validate_4
++    @user.preferences.validate_test_4 = "blah"
++    assert_raise(ActiveRecord::RecordInvalid){ @user.preferences.save! }
++    assert !@user.preferences.save
++    assert 2, @user.errors.get(:preferences).length
++    assert '1one', @user.errors.get(:preferences)[0]
++    assert '2two', @user.errors.get(:preferences)[1]
++    
++    # nasty bug when the parent is a new record
++    user = @user.class.new :preferences_validate_test_4 => "blah"
++    assert !user.save
++    assert 2, @user.errors.get(:preferences).length
++    assert '1one', @user.errors.get(:preferences)[0]
++    assert '2two', @user.errors.get(:preferences)[1]
++  end
++
++  def test_validate_4_has_easy_errors_added_to_base
++    @user.preferences.validate_test_4 = "blah"
++    @user.preferences.save
++    @preference = @user.preferences.detect { |pref|  !pref.errors.empty? }
++    assert_equal ['1one','2two'], @preference.errors.full_messages 
++  end
++  
++  def test_preprocess_1
++    @user.preferences.preprocess_test_1 = "blah"
++    assert_equal "blah", @user.preferences.preprocess_test_1
++    assert_equal "blah", @user.preferences_preprocess_test_1
++    @user.preferences_preprocess_test_1 = "blah"
++    assert_equal false, @user.preferences.preprocess_test_1
++    assert_equal false, @user.preferences_preprocess_test_1
++    
++    @user.preferences.preprocess_test_1 = "true"
++    assert_equal "true", @user.preferences.preprocess_test_1
++    assert_equal "true", @user.preferences_preprocess_test_1
++    @user.preferences_preprocess_test_1 = "true"
++    assert_equal true, @user.preferences.preprocess_test_1
++    assert_equal true, @user.preferences_preprocess_test_1
++  end
++  
++  def test_postprocess_1
++    @user.preferences.postprocess_test_1 = "blah"
++    assert_equal "blah", @user.preferences.postprocess_test_1
++    assert_equal false, @user.preferences_postprocess_test_1
++    
++    @user.preferences.postprocess_test_1 = "true"
++    assert_equal "true", @user.preferences.postprocess_test_1
++    assert_equal true, @user.preferences_postprocess_test_1
++  end
++  
++  def test_default_1
++    assert_equal 'funky town', HasEasyUserTest.new.flags.default_test_1
++    assert_equal 'funky town', @user.flags.default_test_1
++    @user.flags.default_test_1 = "stupid town"
++    assert_equal "stupid town", @user.flags.default_test_1
++    @user.flags.save
++    @user = HasEasyUserTest.find(@user.id)
++    assert_equal "stupid town", @user.flags.default_test_1
++  end
++  
++  def test_default_though_1
++    client = HasEasyClientTest.create
++    user = client.users.create
++    assert_equal 'client default', user.flags.default_through_test_1
++    
++    client.flags.default_through_test_1 = 'not client default'
++    client.flags.save
++    user.client(true)
++    assert_equal 'not client default', user.flags.default_through_test_1
++    
++    user.flags.default_through_test_1 = 'not user default'
++    assert_equal 'not user default', user.flags.default_through_test_1
++    
++    assert_equal 'user default', HasEasyUserTest.new.flags.default_through_test_1
++  end
++  
++  def test_default_dynamic_1
++    assert_equal 1, @user.flags.default_dynamic_test_1
++    assert_equal 2, @user.flags.default_dynamic_test_1
++  end
++  
++  def test_default_dynamic_2
++    assert_equal 1, @user.flags.default_dynamic_test_2
++    assert_equal 2, @user.flags.default_dynamic_test_2
++  end
++  
++  # This is from a bug that swalterd found that has to do with how has_easy assigns default values.
++  # Each thing shares the same default value, so changing it for one will change it for everyone.
++  # The fix is to clone (if possible) the default value when a new HasEasyThing is created.
++  def test_default_reference
++    v = @user.flags.default_reference[0]
++    @user.flags.default_reference[0] = rand(10) + 10
++    new_user = HasEasyUserTest.new
++    assert_equal v, new_user.flags_default_reference[0]
++  end
++  
++  def test_form_usage
++    assert_equal false, @user.prefs.form_usage_test
++    assert_equal 'false', @user.prefs_form_usage_test
++    
++    params = { :person => {:prefs_form_usage_test => 'true'} }
++    assert @user.update_attributes(params[:person])
++    assert_equal true, @user.prefs.form_usage_test
++    assert_equal 'true', @user.prefs_form_usage_test
++    @user.preferences.save!
++    @user = @user.class.find(@user.id)
++    assert_equal true, @user.prefs.form_usage_test
++    assert_equal 'true', @user.prefs_form_usage_test
++    
++    params = { :person => {:prefs_form_usage_test => 'false'} }
++    assert @user.update_attributes(params[:person])
++    assert_equal false, @user.prefs.form_usage_test
++    assert_equal 'false', @user.prefs_form_usage_test
++    @user.preferences.save!
++    @user = @user.class.find(@user.id)
++    assert_equal false, @user.prefs.form_usage_test
++    assert_equal 'false', @user.prefs_form_usage_test
++  end
++  
++end
+diff --git a/uninstall.rb b/uninstall.rb
+deleted file mode 100644
+index 9738333..0000000
+--- a/uninstall.rb
++++ /dev/null
+@@ -1 +0,0 @@
+-# Uninstall hook code here

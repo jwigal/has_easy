@@ -130,3 +130,4 @@ module Izzle
   end
   
 end
+ActiveRecord::Base.send(:include, Izzle::HasEasy)

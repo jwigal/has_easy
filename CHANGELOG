@@ -11,3 +11,6 @@
 
 06/18/2008
 * added :alias and :aliases options to has_easy
+
+03/28/2012
+* converted to a gem, version 0.9.0 (Jeff Wigal)

@@ -220,16 +220,16 @@ class HasEasyTest < Test::Unit::TestCase
     @user.preferences.validate_test_4 = "blah"
     assert_raise(ActiveRecord::RecordInvalid){ @user.preferences.save! }
     assert !@user.preferences.save
-    assert 2, @user.errors.on(:preferences).length
-    assert '1one', @user.errors.on(:preferences)[0]
-    assert '2two', @user.errors.on(:preferences)[1]
+    assert 2, @user.errors.get(:preferences).length
+    assert '1one', @user.errors.get(:preferences)[0]
+    assert '2two', @user.errors.get(:preferences)[1]
     
     # nasty bug when the parent is a new record
     user = @user.class.new :preferences_validate_test_4 => "blah"
     assert !user.save
-    assert 2, @user.errors.on(:preferences).length
-    assert '1one', @user.errors.on(:preferences)[0]
-    assert '2two', @user.errors.on(:preferences)[1]
+    assert 2, @user.errors.get(:preferences).length
+    assert '1one', @user.errors.get(:preferences)[0]
+    assert '2two', @user.errors.get(:preferences)[1]
   end
 
   def test_validate_4_has_easy_errors_added_to_base

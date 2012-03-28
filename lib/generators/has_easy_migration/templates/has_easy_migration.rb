@@ -1,4 +1,4 @@
-class <%= class_name.underscore.camelize %> < ActiveRecord::Migration
+class CreateHasEasyMigration < ActiveRecord::Migration
   def self.up
     create_table :has_easy_things do |t|
       t.string  :model_type, :null => false
