@@ -1,6 +1,6 @@
 class HasEasyThing < ActiveRecord::Base
   belongs_to :model, :polymorphic => true
-  attr_accessor :model_cache, :definition, :value_cache
+  attr_accessor :model_cache, :definition
   before_validation :get_definition
   validate :validate_type_check, :validate_validate
   
@@ -36,14 +36,4 @@ class HasEasyThing < ActiveRecord::Base
       success.each{ |message| self.errors[:base] << message }
     end
   end
-  
-  def value=(v)
-    method_missing(:value=, v.to_yaml)
-    self.value_cache = v
-  end
-  
-  def value
-    self.value_cache ||= YAML.load(method_missing(:value))
-  end
-  
 end
